@@ -1,0 +1,19 @@
+{
+  "name": "pup-yt-fcc",
+  "version": "1.0.0",
+  "description": "parse learning site for completed classes.",
+  "main": "main.js",
+  "dependencies": {
+    "dotenv": "^8.0.0",
+    "minimist": "^1.2.5",
+    "nodejs-fs-utils": "^1.2.4",
+    "puppeteer": "^1.16.0",
+    "puppeteer-firefox": "^0.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node main.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
