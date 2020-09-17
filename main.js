@@ -30,9 +30,10 @@ const html1 = `
 
       <div class="introduction">
       <p>
-      This a summary of all the AWS Training courses I have completed.  These are the
-      free online courses.
-      </p>
+      This a summary of specific YouTube channels I have watched: 
+`;
+            
+const html2 = `
       <p>
       This list is generated from a tool called "pup-yt-fcc" that can be found
       <a
@@ -45,14 +46,14 @@ const html1 = `
       </div>
 `;
 
-const html2 = `
+const html3 = `
     <div id=\"bottom\"></div>
     </article>
   </body>
 </html>
 `;
 
-function build_hours_minutes(data) {
+function build_hours_minutes(data, channels_excluded, channels_included) {
   // Derive timestamps and duration, sort
   // examples
   // "duration": "5 1/2 HOURS",
@@ -61,26 +62,31 @@ function build_hours_minutes(data) {
 
   let totalSec = 0;
   data['completed-courses'].forEach(entry => {
-    // assume "An Bm" or "Bm"
-    try {
-      let parts = entry['duration'].replace(',', '').split(' ');
-      for (i=0; i<parts.length; i += 2) {
-        if (parts[i+1].includes('hour')) {
-          val = parseInt(parts[i]);
-          totalSec += val*60*60;  
+    if (channels_excluded.includes(entry['channel-name'])) {}
+    else {
+      if (!channels_included.length || channels_included.includes(entry['channel-name'])) {
+        // assume "An Bm" or "Bm"
+        try {
+          let parts = entry['duration'].replace(',', '').split(' ');
+          for (i=0; i<parts.length; i += 2) {
+            if (parts[i+1].includes('hour')) {
+              val = parseInt(parts[i]);
+              totalSec += val*60*60;  
+            }
+            if (parts[i+1].includes('minute')) {
+              val = parseInt(parts[i]);
+              totalSec += val*60;  
+            }
+            if (parts[i+1].includes('second')) {
+              val = parseInt(parts[i]);
+              totalSec += val;  
+            }
+          }
+        } catch(error) {
         }
-        if (parts[i+1].includes('minute')) {
-          val = parseInt(parts[i]);
-          totalSec += val*60;  
-        }
-        if (parts[i+1].includes('second')) {
-          val = parseInt(parts[i]);
-          totalSec += val;  
-        }
+        entry['completed-ts'] = Date.parse(entry['registration-date']); // assume registration and completion are close
       }
-    } catch(error) {
     }
-    entry['completed-ts'] = Date.parse(entry['registration-date']); // assume registration and completion are close
   });
 
   let totalMin = Math.floor(totalSec / 60);
@@ -107,12 +113,9 @@ function build_channel_filter_template(options, data) {
 
 function parse_channel_filter_exclude(options) {
   results = [];
-  console.log(options.channelFilterExclude)
   if (options.channelFilterExclude.length) {
     contentStr = fs.readFileSync(options.channelFilterExclude, 'utf8');
-    console.log(contentStr.length)
     lines = contentStr.split('\n');
-    console.log(lines.length)
     lines.forEach(line => {
       temp = line.trim();
       if (temp[0] != '#') results.push(temp)
@@ -121,52 +124,91 @@ function parse_channel_filter_exclude(options) {
   return results;
 }
 
+function parse_channel_filter_include(options) {
+  results = [];
+  if (options.channelFilterInclude.length) {
+    contentStr = fs.readFileSync(options.channelFilterInclude, 'utf8');
+    lines = contentStr.split('\n');
+    lines.forEach(line => {
+      temp = line.trim();
+      if (temp[0] != '#') results.push(temp)
+    });
+  }
+  return results;
+}
 
+function build_html(options, data) {
 
-function build_html(options, data, totalD, totalH, totalM) {
-
+  // parse exclude/include
   channels_excluded = parse_channel_filter_exclude(options);
+  channels_included = parse_channel_filter_include(options);
   console.log(channels_excluded);
-  
+  console.log(channels_included);
+ 
+  // calc totalCourses
+  totalCourses = 0;
+  data['completed-courses'].forEach(entry => {
+    if (channels_excluded.includes(entry['channel-name'])) {}
+    else {
+      if (!channels_included.length || channels_included.includes(entry['channel-name'])) {
+        totalCourses += 1;
+      }
+    }
+  });
+  [totalD, totalH, totalM] = build_hours_minutes(data, channels_excluded, channels_included);
+
   // generate artifacts from data - html
   let htmlStr = html1;
+  if (channels_included.length == 0) {
+    htmlStr += "<b><i>All</i></b></p>\n";
+  } else {
+    htmlStr += "</p>\n";
+    channels_included.forEach(entry => {
+      htmlStr += "<p><b><i>";
+      htmlStr += entry;
+      htmlStr += "</i></b></p>\n";
+    });
+  }
+  htmlStr += html2;
 
   today = new Date()
   htmlStr += "<sup><sub>(updated " + today + ")</sub></sup>\n\n"
 
   totalH += totalD*24;
-  htmlStr += "      <br/><p>Totals - Course: " + data['completed-courses'].length + ", Time: " + totalH + "h " + totalM + "m</p><br/>\n\n";
+  htmlStr += "      <br/><p>Totals - Course: " + totalCourses + ", Time: " + totalH + "h " + totalM + "m</p><br/>\n\n";
   htmlStr += "      <ul>\n";
   data['completed-courses'].forEach(entry => {
     if (channels_excluded.includes(entry['channel-name'])) {}
     else {
-      htmlStr += "            <li>\n";
-      temp = "";
-      htmlStr += "              <hr class=\"" + temp + "\">\n";
-      htmlStr += "              <ul>\n";
-      htmlStr += "                <li>\n";
-      htmlStr += "                <p><img src=\"" + entry['thumbnail'] + "\" loading=\"lazy\"</img></p>\n";
-      htmlStr += "                </li>\n";
-      htmlStr += "                <li>\n";
-      htmlStr += "                  <a target=\"_blank\" href=\"" + entry['link'] + "\">\n";
-      htmlStr += "                    " + entry['title'] + "\n";
-      htmlStr += "                  </a>  ";
-      htmlStr += "                </li>\n";
-      htmlStr += "                <li>\n";
-      htmlStr += "                  <a target=\"_blank\" href=\"" + entry['channel-link'] + "\">\n";
-      htmlStr += "                    " + entry['channel-name'] + "\n";
-      htmlStr += "                  </a>  ";
-      htmlStr += "                </li>\n";
-      htmlStr += "                <li class=\"duration\">" + entry['duration'].toLowerCase() + "</li>\n";
-      htmlStr += "                <li class=\"completed\"><i>Watched: " + entry['watched-date'] + "</i></li>\n";
-      htmlStr += "                <li class=\"description\">" + entry['description'] + "</li>\n";
-      htmlStr += "                <li class=\"topbottom\"><a href=\"#top\">top</a> / <a href=\"#bottom\">bottom</a></li>\n";
-      htmlStr += "              </ul>\n";
-      htmlStr += "            </li>\n";
+      if (!channels_included.length || channels_included.includes(entry['channel-name'])) {
+        htmlStr += "            <li>\n";
+        temp = "";
+        htmlStr += "              <hr class=\"" + temp + "\">\n";
+        htmlStr += "              <ul>\n";
+        htmlStr += "                <li>\n";
+        htmlStr += "                <p><img src=\"" + entry['thumbnail'] + "\" loading=\"lazy\"</img></p>\n";
+        htmlStr += "                </li>\n";
+        htmlStr += "                <li>\n";
+        htmlStr += "                  <a target=\"_blank\" href=\"" + entry['link'] + "\">\n";
+        htmlStr += "                    " + entry['title'] + "\n";
+        htmlStr += "                  </a>  ";
+        htmlStr += "                </li>\n";
+        htmlStr += "                <li>\n";
+        htmlStr += "                  <a target=\"_blank\" href=\"" + entry['channel-link'] + "\">\n";
+        htmlStr += "                    " + entry['channel-name'] + "\n";
+        htmlStr += "                  </a>  ";
+        htmlStr += "                </li>\n";
+        htmlStr += "                <li class=\"duration\">" + entry['duration'].toLowerCase() + "</li>\n";
+        htmlStr += "                <li class=\"completed\"><i>Watched: " + entry['watched-date'] + "</i></li>\n";
+        htmlStr += "                <li class=\"description\">" + entry['description'] + "</li>\n";
+        htmlStr += "                <li class=\"topbottom\"><a href=\"#top\">top</a> / <a href=\"#bottom\">bottom</a></li>\n";
+        htmlStr += "              </ul>\n";
+        htmlStr += "            </li>\n";  
+      }
     }
  });
   htmlStr += "      </ul>";
-  htmlStr += html2;
+  htmlStr += html3;
   fs.writeFileSync(HTML_FILE, htmlStr);
 }
 
@@ -184,9 +226,9 @@ const main = async () => {
     saveSampleChannelFilters: true,
     channelFilterTemplate: "channelFilterTemplate.txt", // list if channels as a template
     //channelFilterExclude:  "",
-    channelFilterInclude:  "",
+    //channelFilterInclude:  "",
     channelFilterExclude:  "channelFilterExclude.txt",  // list of all channels to exclude
-    // channelFilterInclude:  "channelFilterInclude.txt",  // list of all channels to include
+    channelFilterInclude:  "channelFilterInclude.txt",  // list of all channels to include
     saveChannelFilterExclude: true,
 
     screenshot:      false,     // take snapshots
@@ -205,11 +247,10 @@ const main = async () => {
   await base.browser_close(browser);
 
   if (data['completed-courses'].length > 0) {
-    [totalD, totalH, totalM] = build_hours_minutes(data);
     //data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? 1 : -1) // ascending
     //data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? -1 : 1) // decsending
     build_channel_filter_template(options, data);
-    build_html(options, data, totalD, totalH, totalM);
+    build_html(options, data);
   }
 
   console.log("done.");

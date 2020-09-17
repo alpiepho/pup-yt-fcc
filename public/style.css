@@ -1,0 +1,90 @@
+
+.body {
+    margin: auto;
+    width: 500px;
+    /* font-family: Georgia, Cambria, "Times New Roman", Times, serif; */
+    font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
+    line-height: 140%;
+}
+
+.introduction {
+    max-width: 800px;
+}
+
+a,
+a:visited {
+    color: black;
+}
+
+#top {
+    text-align: center;
+}
+
+ul {
+    list-style-type: none;
+    margin-bottom: 15px;
+    padding-inline-start: 0px;
+}
+
+li {
+    list-style-type: none;
+    margin-bottom: 5px;
+}
+
+hr {
+    border-width: medium;
+    border-color: transparent;
+}
+
+.hr_e_learning {
+    background-color: #289D6A;
+}
+
+.hr_learning_path {
+    background-color: #473AAC;
+}
+
+.hr_curriculum {
+    background-color: #6E38CF;
+}
+
+.hr_video {
+    background-color: #289D6A;
+}
+
+.hr_course {
+    background-color: #2B7CEB;
+}
+
+img {
+    width: 500px;
+}
+
+.completed {
+    margin-bottom: 20px;
+}
+
+.details {
+    max-width: 800px;
+}
+
+.topbottom {
+    margin-top: 20px;
+    margin-bottom: 50px;
+}
+
+@media only screen and (max-width: 600px) {
+    .page {
+        width: 90%;
+        margin: auto;
+    }
+    ul {
+        padding: 0;
+    }
+    img {
+        width: 300px;
+    }
+    .details {
+        max-width: 700px;
+    }
+}
