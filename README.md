@@ -7,11 +7,17 @@ Deployed on GitHub pages [here](https://alpiepho.github.io/pup-yt-fcc/).
 - login into YouTube
 - navigate to "History"
 - scroll to bottom (may take a long time)
+- (optional) on chrome, install [Auto Scroll)[https://chrome.google.com/webstore/detail/simple-autoscroll/fgecljolecpahpphjjhfhgiimljpkodo] extension
 - use Chrome tools (inspect)
 - select top html tag
 - right-click and 'copy-outer-html'
 - paste into **history.html**
-- this became neccessary since YouTube blocks the automated login from Puppeteer.
+- (optional on mac) with command line, pbpaste > history.html (reference)[http://hints.macworld.com/article.php?story=20040121013827607]
+- (optional on linux) with command line, xcopy > history.html (reference)[https://stackoverflow.com/questions/749544/pipe-to-from-the-clipboard-in-bash-script]
+- (optional on window10) see (reference)[https://www.addictivetips.com/windows-tips/save-clipboard-image-to-file-windows-10/]
+- this became neccessary since YouTube blocks the automated login from Puppeteer (actually, I don't want to risk my Google login)
+
+:warn: <b>IMPORTANT NOTE</b>: Due to date reformatting, you should run this against **history.html** on the same day it was copied.
 
 # pup-yt-fcc
 

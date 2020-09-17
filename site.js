@@ -90,24 +90,26 @@ const process_completed = async (browser, options, data) => {
     console.log(contentHtml.length)
     var index1 = 0;
     var index2 = 0;
-    //var count = 0;
+    var count = 0;
     var entry;
     var date_label = "";
     while (index1 != -1 && index1 < contentHtml.length) {
       entry = {};
 
+      // find next thumb
+      nextThumbIndex = contentHtml.indexOf('<a id="thumbnail"', index1);
+
       // possible date-label (will adjust 'Today', 'Yesterday', etc. later)
       last1 = index1;
       index1 = contentHtml.indexOf('<div id="title" class="style-scope ytd-item-section-header-renderer">', index1);
       if (index1 == -1) index1 = last1;
+      else if (nextThumbIndex != -1 && nextThumbIndex < index1) index1 = last1; // date-label found is beyond next thumbnail
       else {
         index1 += '<div id="title" class="style-scope ytd-item-section-header-renderer">'.length;
         index2 = contentHtml.indexOf('</div>', index1);
         date_label = contentHtml.substring(index1, index2);
-        console.log(date_label)
         index1 = index2;
       }
-
 
       // get start of next entry
       last1 = index1;
@@ -192,7 +194,7 @@ const process_completed = async (browser, options, data) => {
         index1 = index2;
       }
 
-      //count += 1;
+      count += 1;
       //console.log(count);
       if (entry['title'] != undefined) {
         entry['watched-date'] = date_label;
@@ -202,30 +204,66 @@ const process_completed = async (browser, options, data) => {
 
     // TODO: adjust date-label
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    var now = new Date();
-    year = String(now.getFullYear());
-    today = monthNames[now.getMonth()] + ', ' + String(now.getDate());
+    //const dayNames = ["Sunday", "Monday", "Tuesday", "Wednedsay", "Thursday", "Friday", "Saturday"];
+    var date;
+    date = new Date();
+    year = String(date.getFullYear());
+
+    date = new Date();
+    today = monthNames[date.getMonth()] + ' ' + String(date.getDate()) + ', ' + String(date.getFullYear());
+
+    date = new Date();
+    date.setDate(date.getDate() - 1)
+    yesterday = monthNames[date.getMonth()] + ' ' + String(date.getDate()) + ', ' + String(date.getFullYear());
+
+    sunday = "";
+    monday = "";
+    tuesday = "";
+    wednesday = "";
+    thursday = "";
+    friday = "";
+    saturday = "";
+    for (i=2; i<9; i++) {
+      date = new Date();
+      date.setDate(date.getDate() - i);
+      dateStr = monthNames[date.getMonth()] + ' ' + String(date.getDate()) + ', ' + String(date.getFullYear());
+      switch (date.getDay()) {
+        case 0: sunday = dateStr; break;
+        case 1: monday = dateStr; break;
+        case 2: tuesday = dateStr; break;
+        case 3: wednesday = dateStr; break;
+        case 4: thursday = dateStr; break;
+        case 5: friday = dateStr; break;
+        case 6: saturday = dateStr; break;
+      }
+    }
+
     for (i=0; i<newdata['completed-courses'].length; i++) {
       entry = newdata['completed-courses'][i];
       date_label = entry['watched-date'];
-      if (date_label == 'Today') entry['watched-date'] = today;
-      // if (date_label == 'Yesterday') entry['watched-date'] = yesterday;
-      // if (date_label == 'Sunday') entry['watched-date'] = sunday;
-      // if (date_label == 'Monday') entry['watched-date'] = monday;
-      // if (date_label == 'Tuesday') entry['watched-date'] = tuesday;
-      // if (date_label == 'Wednesday') entry['watched-date'] = wednesday;
-      // if (date_label == 'Thursday') entry['watched-date'] = thursday;
-      // if (date_label == 'Friday') entry['watched-date'] = friday;
-      // if (date_label == 'Saturday') entry['watched-date'] = saturday;
-      if (date_label == undefined) {
-        console.log(date_label)
-        console.log(entry)
-        console.log(i)
+      if (date_label == 'Today') date_label = today;
+      if (date_label == 'Yesterday') date_label = yesterday;
+      if (date_label == 'Sunday') date_label = sunday;
+      if (date_label == 'Monday') date_label = monday;
+      if (date_label == 'Tuesday') date_label = tuesday;
+      if (date_label == 'Wednesday') date_label = wednesday;
+      if (date_label == 'Thursday') date_label = thursday;
+      if (date_label == 'Friday') date_label = friday;
+      if (date_label == 'Saturday') date_label = saturday;
 
+      if (!date_label.includes(',')) date_label = date_label + ', ' + year;
+      entry['watched-date'] = date_label;
+
+      // create entry['watched-yyyymmdd'] for sorting
+      parts = entry['watched-date'].replace(',', '').split(' ');
+      yyyy = parts[2];
+      mm = "0";
+      for (j=0; j<monthNames.length; j++) {
+        if (parts[0] == monthNames[j]) mm = String(j);
       }
-      if (!date_label.includes(',')) entry['watched-date'] = date_label + ', ' + year;
+      dd = parts[1];
+      entry['watched-yyyymmdd'] = yyyy + mm.padStart(2, '0')+ dd.padStart(2, '0');
 
-      // TODO: create entry['watched-ts'] for sorting
     }
 
     if (options.saveSampleData) {
