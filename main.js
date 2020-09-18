@@ -53,7 +53,7 @@ const html3 = `
 </html>
 `;
 
-function build_hours_minutes(data, channels_excluded, channels_included) {
+function build_hours_minutes(data) {
   // Derive timestamps and duration, sort
   // examples
   // "duration": "5 1/2 HOURS",
@@ -62,31 +62,26 @@ function build_hours_minutes(data, channels_excluded, channels_included) {
 
   let totalSec = 0;
   data['completed-courses'].forEach(entry => {
-    if (channels_excluded.includes(entry['channel-name'])) {}
-    else {
-      if (!channels_included.length || channels_included.includes(entry['channel-name'])) {
-        // assume "An Bm" or "Bm"
-        try {
-          let parts = entry['duration'].replace(',', '').split(' ');
-          for (i=0; i<parts.length; i += 2) {
-            if (parts[i+1].includes('hour')) {
-              val = parseInt(parts[i]);
-              totalSec += val*60*60;  
-            }
-            if (parts[i+1].includes('minute')) {
-              val = parseInt(parts[i]);
-              totalSec += val*60;  
-            }
-            if (parts[i+1].includes('second')) {
-              val = parseInt(parts[i]);
-              totalSec += val;  
-            }
-          }
-        } catch(error) {
+    // assume "An Bm" or "Bm"
+    try {
+      let parts = entry['duration'].replace(',', '').split(' ');
+      for (i=0; i<parts.length; i += 2) {
+        if (parts[i+1].includes('hour')) {
+          val = parseInt(parts[i]);
+          totalSec += val*60*60;  
         }
-        entry['completed-ts'] = Date.parse(entry['registration-date']); // assume registration and completion are close
+        if (parts[i+1].includes('minute')) {
+          val = parseInt(parts[i]);
+          totalSec += val*60;  
+        }
+        if (parts[i+1].includes('second')) {
+          val = parseInt(parts[i]);
+          totalSec += val;  
+        }
       }
+    } catch(error) {
     }
+    entry['completed-ts'] = Date.parse(entry['registration-date']); // assume registration and completion are close
   });
 
   let totalMin = Math.floor(totalSec / 60);
@@ -111,39 +106,8 @@ function build_channel_filter_template(options, data) {
   }
 }
 
-function parse_channel_filter_exclude(options) {
-  results = [];
-  if (options.channelFilterExclude.length) {
-    contentStr = fs.readFileSync(options.channelFilterExclude, 'utf8');
-    lines = contentStr.split('\n');
-    lines.forEach(line => {
-      temp = line.trim();
-      if (temp[0] != '#') results.push(temp)
-    });
-  }
-  return results;
-}
-
-function parse_channel_filter_include(options) {
-  results = [];
-  if (options.channelFilterInclude.length) {
-    contentStr = fs.readFileSync(options.channelFilterInclude, 'utf8');
-    lines = contentStr.split('\n');
-    lines.forEach(line => {
-      temp = line.trim();
-      if (temp[0] != '#') results.push(temp)
-    });
-  }
-  return results;
-}
 
 function build_html(options, data) {
-
-  // parse exclude/include
-  channels_excluded = parse_channel_filter_exclude(options);
-  channels_included = parse_channel_filter_include(options);
-  console.log(channels_excluded);
-  console.log(channels_included);
  
   // calc totalCourses
   totalCourses = 0;
@@ -155,7 +119,7 @@ function build_html(options, data) {
       }
     }
   });
-  [totalD, totalH, totalM] = build_hours_minutes(data, channels_excluded, channels_included);
+  [totalD, totalH, totalM] = build_hours_minutes(data);
 
   // generate artifacts from data - html
   let htmlStr = html1;
@@ -186,24 +150,34 @@ function build_html(options, data) {
         htmlStr += "              <hr class=\"" + temp + "\">\n";
         htmlStr += "              <ul>\n";
         htmlStr += "                <li>\n";
-        htmlStr += "                <p><img src=\"" + entry['thumbnail'] + "\" loading=\"lazy\"</img></p>\n";
-        htmlStr += "                </li>\n";
-        htmlStr += "                <li>\n";
-        htmlStr += "                  <a target=\"_blank\" href=\"" + entry['link'] + "\">\n";
-        htmlStr += "                    " + entry['title'] + "\n";
-        htmlStr += "                  </a>  ";
-        htmlStr += "                </li>\n";
-        htmlStr += "                <li>\n";
-        htmlStr += "                  <a target=\"_blank\" href=\"" + entry['channel-link'] + "\">\n";
-        htmlStr += "                    " + entry['channel-name'] + "\n";
-        htmlStr += "                  </a>  ";
-        htmlStr += "                </li>\n";
-        htmlStr += "                <li class=\"duration\">" + entry['duration'].toLowerCase() + "</li>\n";
-        htmlStr += "                <li class=\"completed\"><i>Watched: " + entry['watched-date'] + "</i></li>\n";
-        htmlStr += "                <li class=\"description\">" + entry['description'] + "</li>\n";
-        htmlStr += "                <li class=\"topbottom\"><a href=\"#top\">top</a> / <a href=\"#bottom\">bottom</a></li>\n";
-        htmlStr += "              </ul>\n";
-        htmlStr += "            </li>\n";  
+
+        htmlStr += "                 <div class=\"leftside\">\n";
+        htmlStr += "                   <p><img src=\"" + entry['thumbnail'] + "\" loading=\"lazy\"></img></p>\n";
+        htmlStr += "                 </div>\n";
+
+        htmlStr += "                 <div class=\"rightside\">\n";
+        htmlStr += "                   <ul>\n";
+        htmlStr += "                     <li>\n";
+        htmlStr += "                       <a target=\"_blank\" href=\"" + entry['link'] + "\">\n";
+        htmlStr += "                         " + entry['title'] + "\n";
+        htmlStr += "                       </a>  ";
+        htmlStr += "                     </li>\n";
+        htmlStr += "                     <li>\n";
+        htmlStr += "                       <a target=\"_blank\" href=\"" + entry['channel-link'] + "\">\n";
+        htmlStr += "                         " + entry['channel-name'] + "\n";
+        htmlStr += "                       </a>  ";
+        htmlStr += "                     </li>\n";
+        htmlStr += "                     <li class=\"duration\">" + entry['duration'].toLowerCase() + "</li>\n";
+        htmlStr += "                     <li class=\"completed\"><i>Watched: " + entry['watched-date'] + "</i></li>\n";
+        htmlStr += "                     <li class=\"description\">" + entry['description'] + "</li>\n";
+        htmlStr += "                   </ul>\n";
+        htmlStr += "                 </div>\n";
+
+        htmlStr += "               </li>\n";
+
+        htmlStr += "               <li class=\"topbottom\"><a href=\"#top\">top</a> / <a href=\"#bottom\">bottom</a></li>\n";
+        htmlStr += "             </ul>\n";
+        htmlStr += "           </li>\n";  
       }
     }
  });
@@ -247,7 +221,7 @@ const main = async () => {
   await base.browser_close(browser);
 
   if (data['completed-courses'].length > 0) {
-    //data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? 1 : -1) // ascending
+    data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? 1 : -1) // ascending
     //data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? -1 : 1) // decsending
     build_channel_filter_template(options, data);
     build_html(options, data);
@@ -261,6 +235,7 @@ main();
   
   
 /*
+- missing date
 - fix sort
 - more details? (navigate?)
 - filter - in

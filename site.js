@@ -10,10 +10,10 @@ PAGE_WAIT_COMPLETED = 3000;
 PAGE_WAIT_DETAILS = 3000;
 PAGE_WAIT_DETAILS_RETRY = 20000;
 
-const SAMPLE_FILE = "./artifacts/sample.json";
+const SAMPLE_FILE = "sample.json";
 
 
-const sampleData = require(SAMPLE_FILE);
+//const sampleData = require(SAMPLE_FILE);
 
 
 const process_course_details = async (page, options, href) => {
@@ -69,18 +69,50 @@ const process_course_details = async (page, options, href) => {
   return [newdata['description'], newdata['level'], newdata['duration'], newdata['prereqsuisites'], newdata['type']];
 };
 
+function parse_channel_filter_exclude(options) {
+  results = [];
+  if (options.channelFilterExclude.length) {
+    contentStr = fs.readFileSync(options.channelFilterExclude, 'utf8');
+    lines = contentStr.split('\n');
+    lines.forEach(line => {
+      temp = line.trim();
+      if (temp[0] != '#') results.push(temp)
+    });
+  }
+  return results;
+}
+
+function parse_channel_filter_include(options) {
+  results = [];
+  if (options.channelFilterInclude.length) {
+    contentStr = fs.readFileSync(options.channelFilterInclude, 'utf8');
+    lines = contentStr.split('\n');
+    lines.forEach(line => {
+      temp = line.trim();
+      if (temp[0] != '#') results.push(temp)
+    });
+  }
+  return results;
+}
+
 const process_completed = async (browser, options, data) => {
   console.log("process_completed");
   var newdata;
 
   if (options.useSampleData) {
-    newdata = sampleData;
+    //newdata = sampleData;
   } else {
     // const page = await base.browser_get(
     //   browser,
     //   PUP_URL_BASE,
     //   PAGE_WAIT_COMPLETED
     // );
+
+    // parse exclude/include
+    channels_excluded = parse_channel_filter_exclude(options);
+    channels_included = parse_channel_filter_include(options);
+    console.log(channels_excluded);
+    console.log(channels_included);
 
     newdata = {};
     newdata['completed-courses'] = []
@@ -92,7 +124,7 @@ const process_completed = async (browser, options, data) => {
     var index2 = 0;
     var count = 0;
     var entry;
-    var date_label = "";
+    var date_label = "Today";
     while (index1 != -1 && index1 < contentHtml.length) {
       entry = {};
 
@@ -198,7 +230,12 @@ const process_completed = async (browser, options, data) => {
       //console.log(count);
       if (entry['title'] != undefined) {
         entry['watched-date'] = date_label;
-        newdata['completed-courses'].push(entry);
+        if (channels_excluded.includes(entry['channel-name'])) {}
+        else {
+          if (!channels_included.length || channels_included.includes(entry['channel-name'])) {
+            newdata['completed-courses'].push(entry);
+          }
+        }
       }
     }
 
@@ -253,7 +290,7 @@ const process_completed = async (browser, options, data) => {
 
       if (!date_label.includes(',')) date_label = date_label + ', ' + year;
       entry['watched-date'] = date_label;
-
+ 
       // create entry['watched-yyyymmdd'] for sorting
       parts = entry['watched-date'].replace(',', '').split(' ');
       yyyy = parts[2];

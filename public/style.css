@@ -1,7 +1,7 @@
 
 .body {
     margin: auto;
-    width: 500px;
+    width: 800px;
     /* font-family: Georgia, Cambria, "Times New Roman", Times, serif; */
     font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
     line-height: 140%;
@@ -57,7 +57,7 @@ hr {
 }
 
 img {
-    width: 500px;
+    width: 250px;
 }
 
 .completed {
@@ -69,11 +69,32 @@ img {
 }
 
 .topbottom {
+    clear: both;
     margin-top: 20px;
     margin-bottom: 50px;
 }
 
-@media only screen and (max-width: 600px) {
+.leftside {
+    float: left;
+}
+
+.rightside {
+    float: right;
+    padding-top: 20px;
+    width: 60%;
+}
+
+.rightside li {
+    text-align: right;
+}
+
+@media only screen and (max-width: 900px) {
+    .body {
+        width: 90%;
+    }
+}
+
+@media only screen and (max-width: 800px) {
     .page {
         width: 90%;
         margin: auto;
@@ -86,5 +107,15 @@ img {
     }
     .details {
         max-width: 700px;
+    }
+    .leftside {
+        float: none;
+    }
+    .rightside {
+        float: none;
+        width: 100%;
+    }
+    .rightside li {
+        text-align: left;
     }
 }
