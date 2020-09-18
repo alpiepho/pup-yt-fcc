@@ -150,37 +150,33 @@ function build_html(options, data) {
         htmlStr += "              <hr class=\"" + temp + "\">\n";
         htmlStr += "              <ul>\n";
         htmlStr += "                <li>\n";
-
         htmlStr += "                 <div class=\"leftside\">\n";
         htmlStr += "                   <p><img src=\"" + entry['thumbnail'] + "\" loading=\"lazy\"></img></p>\n";
         htmlStr += "                 </div>\n";
-
         htmlStr += "                 <div class=\"rightside\">\n";
         htmlStr += "                   <ul>\n";
         htmlStr += "                     <li>\n";
         htmlStr += "                       <a target=\"_blank\" href=\"" + entry['link'] + "\">\n";
         htmlStr += "                         " + entry['title'] + "\n";
-        htmlStr += "                       </a>  ";
+        htmlStr += "                       </a>\n";
         htmlStr += "                     </li>\n";
         htmlStr += "                     <li>\n";
         htmlStr += "                       <a target=\"_blank\" href=\"" + entry['channel-link'] + "\">\n";
         htmlStr += "                         " + entry['channel-name'] + "\n";
-        htmlStr += "                       </a>  ";
+        htmlStr += "                       </a>\n";
         htmlStr += "                     </li>\n";
         htmlStr += "                     <li class=\"duration\">" + entry['duration'].toLowerCase() + "</li>\n";
-        htmlStr += "                     <li class=\"completed\"><i>Watched: " + entry['watched-date'] + "</i></li>\n";
+        htmlStr += "                     <li class=\"completed\"><i>Last Watched: " + entry['watched-date'] + "</i></li>\n";
         htmlStr += "                     <li class=\"description\">" + entry['description'] + "</li>\n";
         htmlStr += "                   </ul>\n";
         htmlStr += "                 </div>\n";
-
         htmlStr += "               </li>\n";
-
         htmlStr += "               <li class=\"topbottom\"><a href=\"#top\">top</a> / <a href=\"#bottom\">bottom</a></li>\n";
         htmlStr += "             </ul>\n";
         htmlStr += "           </li>\n";  
       }
     }
- });
+  });
   htmlStr += "      </ul>";
   htmlStr += html3;
   fs.writeFileSync(HTML_FILE, htmlStr);
@@ -189,7 +185,7 @@ function build_html(options, data) {
 
 const main = async () => {
   // INTERNAL OPTIONS
-  options = { 
+  let options = { 
     browserType:     "chrome", // "chrome, firefox" // WARNING: hit limit on number of detail pages with firefox
     headless:        false,     // run without windows
     forceFullGather:  true,     // skip test for number of course
@@ -199,10 +195,10 @@ const main = async () => {
     saveSampleData:   true,     // save to sample data file
     saveSampleChannelFilters: true,
     channelFilterTemplate: "channelFilterTemplate.txt", // list if channels as a template
-    //channelFilterExclude:  "",
-    //channelFilterInclude:  "",
     channelFilterExclude:  "channelFilterExclude.txt",  // list of all channels to exclude
+    //channelFilterExclude:  "",
     channelFilterInclude:  "channelFilterInclude.txt",  // list of all channels to include
+    //channelFilterInclude:  "",
     saveChannelFilterExclude: true,
 
     screenshot:      false,     // take snapshots
@@ -218,14 +214,15 @@ const main = async () => {
   // login, get list of completed courses, logout
   data = {}
   await site.process_completed(browser, options, data);
-  await base.browser_close(browser);
+  await base.browser_close(browser, options);
 
   if (data['completed-courses'].length > 0) {
     data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? 1 : -1) // ascending
     //data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? -1 : 1) // decsending
-    build_channel_filter_template(options, data);
+     build_channel_filter_template(options, data);
     build_html(options, data);
   }
+
 
   console.log("done.");
 };

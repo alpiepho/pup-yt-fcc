@@ -155,7 +155,7 @@ const browser_get_filtered = async (page, href, waitTime) => {
   }
 };
 
-const browser_close = async browser => {
+const browser_close = async (browser, options) => {
   //console.log('browser_close')
   if (options.useSampleData) {
     return null;

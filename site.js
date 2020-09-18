@@ -26,43 +26,43 @@ const process_course_details = async (page, options, href) => {
 
   await base.browser_get_filtered(page, href, PAGE_WAIT_DETAILS);
 
-  newdata = await page.evaluate(() => {
-    let result = {};
-    // parse: courses
-    result['description'] = "";
-    result['duration'] = "";
-    result['level'] = "";
-    result['prereqsuisites'] = [];
-    result['type'] = "";
+  // newdata = await page.evaluate(() => {
+  //   let result = {};
+  //   // parse: courses
+  //   result['description'] = "";
+  //   result['duration'] = "";
+  //   result['level'] = "";
+  //   result['prereqsuisites'] = [];
+  //   result['type'] = "";
 
-    //#app-root > div.page > div.css-70bgut > div.css-16a6yr3 > div.css-t6x1i7 > header > div > div:nth-child(1) > span > span
-    temp = document.querySelectorAll('div [data-testid="LoDetailsLoDescriptionText"] div p');
-    if (temp.length) {
-      result['description'] = temp[0].innerText;
-    }
+  //   //#app-root > div.page > div.css-70bgut > div.css-16a6yr3 > div.css-t6x1i7 > header > div > div:nth-child(1) > span > span
+  //   temp = document.querySelectorAll('div [data-testid="LoDetailsLoDescriptionText"] div p');
+  //   if (temp.length) {
+  //     result['description'] = temp[0].innerText;
+  //   }
 
-    temp = document.querySelectorAll('div:nth-child(1) > span > span');
-    if (temp.length) {
-      result['type'] = temp[0].innerText;
-    }
-    temp = document.querySelectorAll('#about span:nth-child(1) span');
-    if (temp.length) {
-      result['level'] = temp[0].innerText;
-    }
-    temp = document.querySelectorAll('#about span:nth-child(2) span');
-    if (temp.length) {
-      result['duration'] = temp[0].innerText;
-    }
+  //   temp = document.querySelectorAll('div:nth-child(1) > span > span');
+  //   if (temp.length) {
+  //     result['type'] = temp[0].innerText;
+  //   }
+  //   temp = document.querySelectorAll('#about span:nth-child(1) span');
+  //   if (temp.length) {
+  //     result['level'] = temp[0].innerText;
+  //   }
+  //   temp = document.querySelectorAll('#about span:nth-child(2) span');
+  //   if (temp.length) {
+  //     result['duration'] = temp[0].innerText;
+  //   }
 
-    temp = document.querySelectorAll('div [data-testid="LoDetailsLoDescriptionText"] a');
-    for (index = 0; index < temp.length; index++) {
-      entry = {}
-      entry['title'] = temp[index].innerText;
-      entry['href'] = temp[index].href;
-      result['prereqsuisites'].push(entry);
-    }
-    return result;
-  });
+  //   temp = document.querySelectorAll('div [data-testid="LoDetailsLoDescriptionText"] a');
+  //   for (index = 0; index < temp.length; index++) {
+  //     entry = {}
+  //     entry['title'] = temp[index].innerText;
+  //     entry['href'] = temp[index].href;
+  //     result['prereqsuisites'].push(entry);
+  //   }
+  //   return result;
+  // });
 
   //console.log("process_course_details done");
   console.log(newdata)
@@ -93,6 +93,17 @@ function parse_channel_filter_include(options) {
     });
   }
   return results;
+}
+
+const title_exists = async (data, title) => {
+  result = false;
+  for (i=0; i<data.length; i++) {
+    if (title == data[i]['title']) {
+      result = true;
+      break;
+    }
+  }
+  return result;
 }
 
 const process_completed = async (browser, options, data) => {
@@ -226,14 +237,18 @@ const process_completed = async (browser, options, data) => {
         index1 = index2;
       }
 
-      count += 1;
-      //console.log(count);
       if (entry['title'] != undefined) {
         entry['watched-date'] = date_label;
         if (channels_excluded.includes(entry['channel-name'])) {}
         else {
           if (!channels_included.length || channels_included.includes(entry['channel-name'])) {
-            newdata['completed-courses'].push(entry);
+            found = await title_exists(newdata['completed-courses'], entry['title']);
+            if (!found) {
+              newdata['completed-courses'].push(entry);
+              count += 1;
+              //console.log(count);
+              //break;
+            }
           }
         }
       }
@@ -309,6 +324,7 @@ const process_completed = async (browser, options, data) => {
 
     if (options.gatherDetails) {
       var filteredPage = await base.browser_prep_filtered(browser);
+      console.log(newdata['completed-courses'].length);
       for (i=0; i<newdata['completed-courses'].length; i++) {
         if (!newdata['completed-courses'][i]['details']) {
           console.log(i);
