@@ -165,6 +165,7 @@ function build_html(options, data) {
         htmlStr += "                         " + entry['channel-name'] + "\n";
         htmlStr += "                       </a>\n";
         htmlStr += "                     </li>\n";
+        htmlStr += "                     <li class=\"release-date\">Released: " + entry['release-date'] + "</li>\n";
         htmlStr += "                     <li class=\"duration\">" + entry['duration'].toLowerCase() + "</li>\n";
         htmlStr += "                     <li class=\"completed\"><i>Last Watched: " + entry['watched-date'] + "</i></li>\n";
         htmlStr += "                     <li class=\"description\">" + entry['description'] + "</li>\n";
@@ -190,7 +191,7 @@ const main = async () => {
     headless:        false,     // run without windows
     forceFullGather:  true,     // skip test for number of course
     scrollToBottom:   true,     // scroll page to bottom (WARNING: non-visible thumbnails are not loaded until page is scrolled)
-    gatherDetails:    false,     // parse the details
+    gatherDetails:    true,     // parse the details
     useSampleData:    false,     // skip browser and use sample data file
     saveSampleData:   true,     // save to sample data file
     saveSampleChannelFilters: true,
@@ -219,7 +220,7 @@ const main = async () => {
   if (data['completed-courses'].length > 0) {
     data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? 1 : -1) // ascending
     //data['completed-courses'].sort((a, b) => (a['watched-yyyymmdd'] < b['watched-yyyymmdd']) ? -1 : 1) // decsending
-     build_channel_filter_template(options, data);
+    build_channel_filter_template(options, data);
     build_html(options, data);
   }
 
@@ -229,12 +230,7 @@ const main = async () => {
 
 main();
 
-  
-  
-/*
-- missing date
-- fix sort
-- more details? (navigate?)
-- filter - in
-- filter - out
+/* 
+TODO
+- now showing last watched date, also add first watched date
 */

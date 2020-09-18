@@ -19,54 +19,25 @@ const SAMPLE_FILE = "sample.json";
 const process_course_details = async (page, options, href) => {
   console.log("process_course_details: " + href);
   var newdata = {};
-  newdata['description'] = "";
-  newdata['duration'] = "";
-  newdata['level'] = "";
-  newdata['prereqsuisites'] = "";
+  newdata['release-date'] = "";
 
   await base.browser_get_filtered(page, href, PAGE_WAIT_DETAILS);
 
-  // newdata = await page.evaluate(() => {
-  //   let result = {};
-  //   // parse: courses
-  //   result['description'] = "";
-  //   result['duration'] = "";
-  //   result['level'] = "";
-  //   result['prereqsuisites'] = [];
-  //   result['type'] = "";
+  newdata = await page.evaluate(() => {
+    let result = {};
+    // parse: courses
+    result['release-date'] = "";
 
-  //   //#app-root > div.page > div.css-70bgut > div.css-16a6yr3 > div.css-t6x1i7 > header > div > div:nth-child(1) > span > span
-  //   temp = document.querySelectorAll('div [data-testid="LoDetailsLoDescriptionText"] div p');
-  //   if (temp.length) {
-  //     result['description'] = temp[0].innerText;
-  //   }
+    temp = document.querySelectorAll('#date > yt-formatted-string');
+    if (temp.length) {
+      result['release-date'] = temp[0].innerText;
+    }
+    return result;
+  });
 
-  //   temp = document.querySelectorAll('div:nth-child(1) > span > span');
-  //   if (temp.length) {
-  //     result['type'] = temp[0].innerText;
-  //   }
-  //   temp = document.querySelectorAll('#about span:nth-child(1) span');
-  //   if (temp.length) {
-  //     result['level'] = temp[0].innerText;
-  //   }
-  //   temp = document.querySelectorAll('#about span:nth-child(2) span');
-  //   if (temp.length) {
-  //     result['duration'] = temp[0].innerText;
-  //   }
-
-  //   temp = document.querySelectorAll('div [data-testid="LoDetailsLoDescriptionText"] a');
-  //   for (index = 0; index < temp.length; index++) {
-  //     entry = {}
-  //     entry['title'] = temp[index].innerText;
-  //     entry['href'] = temp[index].href;
-  //     result['prereqsuisites'].push(entry);
-  //   }
-  //   return result;
-  // });
-
-  //console.log("process_course_details done");
-  console.log(newdata)
-  return [newdata['description'], newdata['level'], newdata['duration'], newdata['prereqsuisites'], newdata['type']];
+  console.log("process_course_details done");
+  //console.log(newdata)
+  return [newdata['release-date']];
 };
 
 function parse_channel_filter_exclude(options) {
@@ -247,7 +218,7 @@ const process_completed = async (browser, options, data) => {
               newdata['completed-courses'].push(entry);
               count += 1;
               //console.log(count);
-              //break;
+              //if (count > 1) break;
             }
           }
         }
@@ -326,14 +297,10 @@ const process_completed = async (browser, options, data) => {
       var filteredPage = await base.browser_prep_filtered(browser);
       console.log(newdata['completed-courses'].length);
       for (i=0; i<newdata['completed-courses'].length; i++) {
-        if (!newdata['completed-courses'][i]['details']) {
+        if (!newdata['completed-courses'][i]['release-date']) {
           console.log(i);
-          [temp1, temp2, temp3, temp4, temp5] = await process_course_details(filteredPage, options, newdata['completed-courses'][i]['link']);
-          newdata['completed-courses'][i]['description']    = temp1;
-          newdata['completed-courses'][i]['level']          = temp2;
-          newdata['completed-courses'][i]['duration']       = temp3;
-          newdata['completed-courses'][i]['prereqsuisites'] = temp4;
-          newdata['completed-courses'][i]['type']           = temp5;
+          details = await process_course_details(filteredPage, options, newdata['completed-courses'][i]['link']);
+          newdata['completed-courses'][i]['release-date']    = details[0];
         }
       }
     }
